@@ -532,7 +532,7 @@
     if (/[0-9]/.test(val)) score++;
     if (/[^A-Za-z0-9]/.test(val)) score++;
     const cls = ['','weak','fair','good','strong'];
-    const lbl = ['','😟 Quá yếu','😐 Trung bình','😊 Tốt','💪 Mạnh'];
+    const lbl = ['','Quá yếu','Trung bình','Tốt','Mạnh'];
     for (let i = 0; i < score; i++) bars[i].className = 'pwd-bar filled ' + cls[score];
     hint.textContent = lbl[score];
     hint.style.color = score <= 1 ? '#EF4444' : score === 2 ? '#F59E0B' : score === 3 ? '#10B981' : '#0194F3';
@@ -562,7 +562,35 @@
     if (pass.length < 6) { showAlert('login-alert', 'Mật khẩu cần ít nhất 6 ký tự.'); return; }
     const btn = document.getElementById('btn-login');
     btn.classList.add('loading');
-    setTimeout(() => { btn.classList.remove('loading'); showSuccess('Đăng nhập thành công! 🎉', 'Chào mừng bạn quay lại. Thật tuyệt khi được gặp lại bạn!'); }, 1800);
+    
+    // Retrieve registered user if available, or extract name from email
+    let registered = null;
+    try { registered = JSON.parse(localStorage.getItem('registeredUser')); } catch(e) {}
+    
+    let fullName = 'Yến Nguyễn';
+    let shortName = 'Yến';
+    if (registered && registered.email === email && registered.fullName) {
+      fullName = registered.fullName;
+      shortName = registered.shortName || registered.fullName.split(' ').pop();
+    } else if (email.includes('@')) {
+      const uname = email.split('@')[0];
+      fullName = uname.charAt(0).toUpperCase() + uname.slice(1);
+      shortName = fullName;
+    }
+    
+    const userSession = {
+      fullName: fullName,
+      shortName: shortName,
+      points: 0,
+      balance: '0 VNĐ',
+      tier: 'Bronze Priority'
+    };
+    
+    setTimeout(() => {
+      btn.classList.remove('loading');
+      localStorage.setItem('currentUser', JSON.stringify(userSession));
+      showSuccess('Đăng nhập thành công', 'Chào mừng bạn quay lại. Thật tuyệt khi được gặp lại bạn!');
+    }, 1800);
   }
 
   /* REGISTER */
@@ -580,7 +608,25 @@
     if (pass.length < 8) { showAlert('register-alert', 'Mật khẩu cần ít nhất 8 ký tự.'); return; }
     const btn = document.getElementById('btn-register');
     btn.classList.add('loading');
-    setTimeout(() => { btn.classList.remove('loading'); showSuccess('Đăng ký thành công! 🚀', 'Bạn đã có tài khoản Traveloka. Hãy khám phá hàng ngàn chuyến đi tuyệt vời!'); }, 2000);
+    
+    const nameParts = name.split(' ');
+    const shortName = nameParts[nameParts.length - 1] || name;
+    
+    const userSession = {
+      fullName: name,
+      shortName: shortName,
+      email: email,
+      points: 0,
+      balance: '0 VNĐ',
+      tier: 'Bronze Priority'
+    };
+    
+    setTimeout(() => {
+      btn.classList.remove('loading');
+      localStorage.setItem('registeredUser', JSON.stringify(userSession));
+      localStorage.setItem('currentUser', JSON.stringify(userSession));
+      showSuccess('Đăng ký thành công', 'Bạn đã có tài khoản Traveloka. Hãy khám phá hàng ngàn chuyến đi tuyệt vời!');
+    }, 2000);
   }
 
   /* GOOGLE AUTH */
@@ -590,7 +636,15 @@
     btn.innerHTML = `<svg width="18" height="18" class="spinner" style="border:2px solid #ccc;border-top-color:#0194F3;border-radius:50%;animation:spin .7s linear infinite;display:inline-block"></svg>&nbsp; Đang kết nối Google...`;
     setTimeout(() => {
       btn.disabled = false; btn.style.opacity = '';
-      const msg = mode === 'login' ? 'Đăng nhập Google thành công! 🎉' : 'Đăng ký Google thành công! 🚀';
+      const userSession = {
+        fullName: 'Yến Nguyễn',
+        shortName: 'Yến',
+        points: 0,
+        balance: '0 VNĐ',
+        tier: 'Bronze Priority'
+      };
+      localStorage.setItem('currentUser', JSON.stringify(userSession));
+      const msg = mode === 'login' ? 'Đăng nhập Google thành công' : 'Đăng ký Google thành công';
       const desc = mode === 'login'
         ? 'Chào mừng bạn quay lại Traveloka!'
         : 'Tài khoản Google của bạn đã được liên kết với Traveloka.';
@@ -600,8 +654,15 @@
 
   /* GOOGLE CREDENTIAL CALLBACK */
   function handleGoogleCredential(response) {
-    // In production: send response.credential (JWT) to your backend for verification
     console.log('Google credential JWT received');
+    const userSession = {
+      fullName: 'Yến Nguyễn',
+      shortName: 'Yến',
+      points: 0,
+      balance: '0 VNĐ',
+      tier: 'Bronze Priority'
+    };
+    localStorage.setItem('currentUser', JSON.stringify(userSession));
     showSuccess('Đăng nhập Google thành công!', 'Chào mừng bạn đến với Traveloka!');
   }
 
