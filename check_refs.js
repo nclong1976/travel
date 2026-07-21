@@ -1,0 +1,12 @@
+﻿const fs = require("fs");
+const path = require("path");
+const root = __dirname;
+const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
+const refs = new Set();
+const re = /(?:src|href)=["']((?!https?:\/\/|data:|#|mailto:|tel:)[^"'#?]+)["']/g;
+let m;
+while ((m = re.exec(html))) refs.add(m[1]);
+const missing = [...refs].filter(ref => !fs.existsSync(path.join(root, ref.replace(/^\//, "")))).sort();
+console.log("Total refs:", refs.size);
+console.log("Missing:", missing.length);
+missing.forEach(x => console.log(x));
